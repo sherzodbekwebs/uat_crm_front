@@ -29,8 +29,6 @@ import {
   MapPin,
   List,
   MoreHorizontal,
-  BarChart3,
-  Zap,
   CheckCircle2,
   Calendar,
   MessageSquare,
@@ -181,41 +179,9 @@ function App() {
 
   return (
     <div className="page-container">
-      {/* 1. TOP CORPORATE BANNER */}
-      <header className="corp-header">
-        <div className="corp-brand-lockup">
-          <div className="corp-logo-mark">
-            <span className="logo-u">
-              U<span>↗</span>
-            </span>
-          </div>
-          <div className="corp-brand-text">
-            <h1>UzAutoTrailer</h1>
-            <span>C R M</span>
-          </div>
-          <div className="corp-divider" />
-          <div className="corp-tagline">
-            Sotuvlarni boshqarish.
-            <small>Katta imkoniyatlarga yo‘l.</small>
-          </div>
-        </div>
-        <div className="corp-trust-banner">
-          Samarali savdo. Shaffof jarayon.
-          <span>Yuqori natija.</span>
-        </div>
-      </header>
-
-      {/* 2. MAIN APPLICATION WINDOW */}
       <div className="window-frame">
         {/* SIDEBAR */}
         <aside className="sidebar">
-          {/* macOS window control dots */}
-          <div className="window-dots">
-            <span className="dot dot-red" />
-            <span className="dot dot-yellow" />
-            <span className="dot dot-green" />
-          </div>
-
           {/* Sidebar Brand Lockup */}
           <div className="sidebar-brand">
             <span className="sidebar-logo">
@@ -672,28 +638,6 @@ function App() {
           </section>
         </main>
       </div>
-
-      {/* 3. BOTTOM CORPORATE FOOTER BANNER */}
-      <footer className="corp-footer-banner">
-        <div className="footer-brand-title">
-          <h4>UZAUTOTRAILER CRM</h4>
-          <p>YANGI IMKONIYATLAR SARI BIRGA</p>
-        </div>
-        <div className="footer-features-row">
-          <div className="footer-feature-item">
-            <i><BarChart3 size={18} /></i>
-            <span>Ma’lumotlar asosida qaror qabul qiling</span>
-          </div>
-          <div className="footer-feature-item">
-            <i><Users size={18} /></i>
-            <span>Sotuv jarayonini to‘liq nazorat qiling</span>
-          </div>
-          <div className="footer-feature-item">
-            <i><Zap size={18} /></i>
-            <span>Samaradorlikni yanada oshiring</span>
-          </div>
-        </div>
-      </footer>
 
       {/* MODALS */}
       {modal && (

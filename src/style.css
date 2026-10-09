@@ -93,10 +93,11 @@ button:disabled {
   cursor: not-allowed;
 }
 
-/* Page wrapper containing top corporate banner, app window, and bottom banner */
+/* Page wrapper */
 .page-container {
   width: 100%;
   max-width: 100%;
+  height: 100vh;
   min-height: 100vh;
   margin: 0;
   padding: 0;
@@ -104,6 +105,7 @@ button:disabled {
   flex-direction: column;
   gap: 0;
   box-sizing: border-box;
+  overflow: hidden;
 }
 
 /* Top corporate branding banner */
@@ -217,7 +219,8 @@ button:disabled {
   display: flex;
   flex: 1;
   width: 100%;
-  min-height: calc(100vh - 120px);
+  height: 100vh;
+  min-height: 100vh;
   position: relative;
 }
 
@@ -231,6 +234,8 @@ aside.sidebar {
   padding: 18px 14px 18px;
   flex-shrink: 0;
   border-right: 1px solid rgba(255, 255, 255, 0.05);
+  height: 100vh;
+  overflow-y: auto;
 }
 
 /* macOS window control dots */
