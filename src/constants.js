@@ -1,0 +1,7 @@
+export const stages=[['new','Yangi lead','#6288db'],['contacted','Bog‘lanildi','#a481cf'],['offer','Taklif yuborildi','#d2a147'],['negotiation','Muzokara','#dc8861'],['won','Sotuv','#329780'],['lost','Rad etildi','#ad7377']];
+export const choices={customerType:[['legal','Yuridik shaxs'],['entrepreneur','Yakka tartibdagi tadbirkor'],['individual','Jismoniy shaxs']],paymentType:[['cash','Naqd'],['leasing','Lizing'],['installment','Bo‘lib to‘lash'],['transfer','Pul o‘tkazish'],['undecided','Aniqlanmagan']],offerSent:[['no','Yuborilmagan'],['yes','Yuborilgan']],rejectionReason:[['','Tanlanmagan'],['expensive','Qimmat'],['unsuitable','To‘g‘ri kelmadi'],['price_only','Faqat narx bilish uchun'],['other','Boshqa']],source:[['website','Veb-sayt'],['instagram','Instagram'],['phone','Telefon qo‘ng‘irog‘i'],['telegram','Telegram'],['visit','Tashrif'],['referral','Tavsiya'],['other','Boshqa']]};
+export const regions=['Toshkent shahri','Toshkent viloyati','Samarqand','Qashqadaryo','Surxondaryo','Buxoro','Navoiy','Jizzax','Sirdaryo','Farg‘ona','Andijon','Namangan','Xorazm','Qoraqalpog‘iston Respublikasi'];
+export const label=(type,v)=>choices[type]?.find(x=>x[0]===v)?.[1]||v;
+export const date=v=>v?new Date(v).toLocaleString('uz-UZ',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}):'—';
+export const money=v=>new Intl.NumberFormat('uz-UZ').format(v||0);
+export function payload(l){const {id,version,createdAt,updatedAt,...data}=l;return data;}
