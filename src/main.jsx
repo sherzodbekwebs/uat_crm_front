@@ -1,40 +1,1415 @@
-import React,{useEffect,useState} from 'react';
-import {createRoot} from 'react-dom/client';
-import {LayoutDashboard,Columns3,Users,Plus,Search,ArrowUpRight,Phone,CalendarDays,X,LogOut,ChevronRight,RefreshCw,Check,Building2,SlidersHorizontal,Download} from 'lucide-react';
-import {stages,choices,regions,label,date,money,payload} from './constants';
+import React, { useEffect, useState } from 'react';
+import { createRoot } from 'react-dom/client';
+import {
+  LayoutDashboard,
+  Columns3,
+  Users,
+  Plus,
+  Search,
+  ArrowUpRight,
+  Phone,
+  CalendarDays,
+  X,
+  LogOut,
+  ChevronRight,
+  RefreshCw,
+  Check,
+  Building2,
+  SlidersHorizontal,
+  Download,
+  Bell,
+  FileText,
+  Trophy,
+  XCircle,
+  Clock,
+  Settings,
+  ShieldCheck,
+  TrendingUp,
+  Coins,
+  MapPin,
+  List,
+  MoreHorizontal,
+  BarChart3,
+  Zap,
+  CheckCircle2,
+  Calendar,
+  MessageSquare,
+  Sparkles,
+} from 'lucide-react';
+import { stages, choices, regions, label, date, money, payload } from './constants';
 import './style.css';
-const API=import.meta.env.VITE_API_URL||'/api';
-async function request(path,method='GET',data){const r=await fetch(API+path,{method,headers:{'Content-Type':'application/json',Authorization:'Bearer '+sessionStorage.getItem('uat_token')},body:data?JSON.stringify(data):undefined});const b=await r.json().catch(()=>({message:'Server bilan aloqa yo‘q'}));if(!r.ok){if(r.status===401&&path!='/auth/login'){sessionStorage.clear();window.dispatchEvent(new Event('uat-logout'));}throw Error(Array.isArray(b.message)?b.message.join(', '):b.message||'So‘rov bajarilmadi');}return b;}
-function App(){
- const [user,setUser]=useState(()=>{try{return JSON.parse(sessionStorage.getItem('uat_user'))}catch{return null}}),[page,setPage]=useState('board'),[leads,setLeads]=useState([]),[users,setUsers]=useState([]),[products,setProducts]=useState([]),[productError,setProductError]=useState(''),[error,setError]=useState(''),[loading,setLoading]=useState(false),[modal,setModal]=useState(null),[query,setQuery]=useState(''),[operator,setOperator]=useState(''),[source,setSource]=useState(''),[from,setFrom]=useState(''),[to,setTo]=useState(''),[busy,setBusy]=useState(false);
- useEffect(()=>{const fn=()=>setUser(null);window.addEventListener('uat-logout',fn);return()=>window.removeEventListener('uat-logout',fn)},[]);
- async function load(){setLoading(true);try{const [l,u]=await Promise.all([request('/leads'),request('/users')]);setLeads(l);setUsers(u);setError('');}catch(e){setError(e.message)}finally{setLoading(false)}}
- async function loadProducts(){setProductError('');try{setProducts(await request('/products'));}catch(e){setProductError(e.message)}}
- useEffect(()=>{if(user){load();loadProducts();const t=setInterval(load,60000);return()=>clearInterval(t)}},[user]);
- const filtered=leads.filter(l=>(!operator||l.operatorId===+operator)&&(!source||l.source===source)&&(!from||l.createdAt.slice(0,10)>=from)&&(!to||l.createdAt.slice(0,10)<=to)&&[l.fullName,l.phone,l.company,...l.products.map(p=>p.name)].join(' ').toLowerCase().includes(query.toLowerCase()));
- async function save(data){if(busy)return;setBusy(true);try{await request(modal.id?'/leads/'+modal.id:'/leads',modal.id?'PUT':'POST',modal.id?{...data,version:modal.version}:data);setModal(null);await load();}catch(e){throw e;}finally{setBusy(false)}}
- async function move(id,status){const lead=leads.find(l=>l.id===id);if(!lead||lead.status===status||busy)return;if(status==='lost'){setModal({...lead,status});return;}setBusy(true);try{await request('/leads/'+id,'PUT',{...payload(lead),status,version:lead.version});await load();}catch(e){setError(e.message)}finally{setBusy(false)}}
- if(!user)return <Login onLogin={setUser}/>;
- const won=filtered.filter(l=>l.status==='won'),active=filtered.filter(l=>!['won','lost'].includes(l.status));
- return <div className="app"><aside><div className="brand"><span className="brand-mark">U<span>↗</span></span><div>UzAutoTrailer<small>SALES WORKSPACE</small></div></div><div className="workspace"><span className="online"/> Sotuv bo‘limi <span className="tag">CRM</span></div><p className="nav-caption">ISH MAYDONI</p><nav>{[['board',Columns3,'Leadlar'],['stats',LayoutDashboard,'Statistika']].map(([id,Icon,title])=><button key={id} className={page===id?'active':''} onClick={()=>setPage(id)}><Icon size={19}/>{title}{id==='board'&&<b>{leads.length}</b>}</button>)}</nav><div className="aside-bottom"><div className="help"><span className="online"/> Yagona mijozlar bazasi<p>Har bir murojaat — yangi imkoniyat.</p></div><div className="profile"><span className="avatar">{user.name[0]}</span><div>{user.name}<small>{user.role==='admin'?'Administrator':'Operator'}</small></div><button title="Chiqish" onClick={()=>{sessionStorage.clear();setUser(null)}}><LogOut size={18}/></button></div></div></aside><main><header><div className="breadcrumb">Ish maydoni <ChevronRight size={14}/> {page==='board'?'Leadlar':'Statistika'}</div><div className="header-right"><span className="online"/> UzAutoTrailer CRM <span className="avatar small">{user.name[0]}</span></div></header><section className="content"><div className="page-heading"><div><p className="eyebrow">MIJOZLAR BILAN ISHLASH</p><h1>{page==='board'?'Har bir lead nazoratda.':'Raqamlar orqali natija.'}</h1><p className="muted">{page==='board'?'Murojaatlarni boshqaring, muloqotni davom ettiring va sotuvga olib boring.':'Jamoa natijalari va mijozlar qiziqishini bir joyda kuzating.'}</p></div><button className="primary" onClick={()=>setModal({})}><Plus size={18}/> Yangi lead</button></div>{error&&<div role="alert" className="error">{error}<button onClick={load}>Qayta urinish</button></div>}<div className="metrics"><Metric title="Jami leadlar" value={filtered.length} sub="Tanlangan davr bo‘yicha" icon={<Users size={19}/>}/><Metric title="Faol muzokaralar" value={active.length} sub="Jarayondagi mijozlar" icon={<Columns3 size={19}/>}/><Metric title="Muvaffaqiyatli sotuv" value={won.length} sub={`${filtered.length?Math.round(won.length/filtered.length*100):0}% umumiy konversiya`} icon={<Check size={19}/>}/><Metric title="Sotuv summasi" value={money(won.reduce((n,l)=>n+l.amount,0))} sub="UZS · muvaffaqiyatli leadlar" icon={<ArrowUpRight size={19}/>}/></div><div className="toolbar"><div className="search"><Search size={17}/><input placeholder="Ism, telefon yoki mahsulot..." value={query} onChange={e=>setQuery(e.target.value)}/></div><select aria-label="Operator filtri" value={operator} onChange={e=>setOperator(e.target.value)}><option value="">Barcha operatorlar</option>{users.map(u=><option key={u.id} value={u.id}>{u.name}</option>)}</select><select aria-label="Manba filtri" value={source} onChange={e=>setSource(e.target.value)}><option value="">Barcha manbalar</option>{choices.source.map(([v,t])=><option key={v} value={v}>{t}</option>)}</select><input aria-label="Davr boshlanishi" title="Davr boshlanishi" type="date" value={from} onChange={e=>setFrom(e.target.value)}/><span>—</span><input aria-label="Davr oxiri" title="Davr oxiri" type="date" min={from} value={to} onChange={e=>setTo(e.target.value)}/><button className="icon-button" title="Yangilash" onClick={load}><RefreshCw size={17} className={loading?'spin':''}/></button></div>{page==='board'?<><div className="board-heading"><h2><Columns3 size={18}/> Sotuv voronkasi <span>{filtered.length} ta lead</span></h2><small>Kartani suring yoki ichida statusni tanlang</small></div><div className="board">{stages.map(([status,title,color])=><section className="column" key={status} onDragOver={e=>e.preventDefault()} onDrop={e=>{e.preventDefault();move(e.dataTransfer.getData('text/plain'),status)}}><div className="column-title"><span style={{background:color}}/>{title}<b>{filtered.filter(l=>l.status===status).length}</b><button title={`${title}: lead qo‘shish`} onClick={()=>setModal({status})}><Plus size={16}/></button></div><div className="cards">{filtered.filter(l=>l.status===status).map(l=><article key={l.id} className="lead-card" draggable={!busy} onDragStart={e=>e.dataTransfer.setData('text/plain',l.id)} onClick={()=>setModal(l)} tabIndex={0} onKeyDown={e=>{if(e.key==='Enter')setModal(l)}}><div className="card-top"><span className={'source '+l.source}>{label('source',l.source)}</span><span className="dots">···</span></div><h3>{l.fullName}</h3><p className="company">{l.company||label('customerType',l.customerType)}</p><div className="products">{l.products.slice(0,2).map(p=><span key={p.id}>{p.name}</span>)}{l.products.length>2&&<span>+{l.products.length-2}</span>}</div><div className="card-meta"><Phone size={13}/>{l.phone}</div><div className="card-meta"><Building2 size={13}/>{l.region}, {l.city}</div>{l.followUpAt&&<div className={'follow-up '+(new Date(l.followUpAt)<new Date()&&!['won','lost'].includes(l.status)?'late':'')}><CalendarDays size={13}/>{date(l.followUpAt)}</div>}<footer><span><i className="avatar tiny">{users.find(u=>u.id===l.operatorId)?.name?.[0]}</i>{users.find(u=>u.id===l.operatorId)?.name}</span><small>{money(l.amount)} UZS</small></footer></article>)}{!filtered.some(l=>l.status===status)&&<button className="empty-column" onClick={()=>setModal({status})}><Plus size={20}/><span>Bu bosqichda lead yo‘q</span><small>Yangi lead qo‘shish</small></button>}</div></section>)}</div><div className="board-note"><span className="online"/> O‘zgarishlar PostgreSQL bazasida saqlanadi <span>60 soniyada avtomatik yangilanadi</span></div></>:<Stats leads={filtered} users={users}/>}</section></main>{modal&&<LeadModal lead={modal} users={users} products={products} productError={productError} retryProducts={loadProducts} onClose={()=>!busy&&setModal(null)} onSave={save} busy={busy} currentUser={user} leads={leads}/>}</div>
+
+const API = import.meta.env.VITE_API_URL || '/api';
+
+async function request(path, method = 'GET', data) {
+  const r = await fetch(API + path, {
+    method,
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: 'Bearer ' + sessionStorage.getItem('uat_token'),
+    },
+    body: data ? JSON.stringify(data) : undefined,
+  });
+  const b = await r.json().catch(() => ({ message: 'Server bilan aloqa yo‘q' }));
+  if (!r.ok) {
+    if (r.status === 401 && path !== '/auth/login') {
+      sessionStorage.clear();
+      window.dispatchEvent(new Event('uat-logout'));
+    }
+    throw Error(Array.isArray(b?.message) ? b.message.join(', ') : b?.message || 'So‘rov bajarilmadi');
+  }
+  return b;
 }
-function Metric({title,value,sub,icon}){return <div className="metric"><div><span>{title}</span><i>{icon}</i></div><strong>{value}</strong><small>{sub}</small></div>}
-function Login({onLogin}){const [error,setError]=useState(''),[busy,setBusy]=useState(false);return <div className="login"><div className="login-story"><div className="brand">UzAutoTrailer <span>↗</span></div><p className="eyebrow">SOTUV JAMOASI UCHUN</p><h1>Muloqotdan<br/>natijagacha.</h1><p>Leadlar, mijozlar va jamoa natijalari.<br/>Hammasi bitta ish maydonida.</p><div className="login-lines"/><small>UzAutoTrailer · Lead management</small></div><form onSubmit={async e=>{e.preventDefault();setBusy(true);setError('');const data=new FormData(e.target);try{const r=await request('/auth/login','POST',Object.fromEntries(data));sessionStorage.setItem('uat_token',r.token);sessionStorage.setItem('uat_user',JSON.stringify(r.user));onLogin(r.user)}catch(e){setError(e.message)}finally{setBusy(false)}}}><span className="tag">XUSH KELIBSIZ</span><h2>Ish maydoniga kirish</h2><p className="muted">Operator hisobingiz orqali davom eting.</p><label>Login<input name="username" autoComplete="username" required placeholder="rahima"/></label><label>Parol<input name="password" type="password" autoComplete="current-password" required placeholder="Parolingizni kiriting"/></label>{error&&<p role="alert" className="error">{error}</p>}<button className="primary" disabled={busy}>{busy?'Kirilmoqda...':'Kirish'}<ArrowUpRight size={18}/></button><small>Hisoblar: Rahima, Amirshoh va Admin.<br/>Parollarni administrator sozlaydi.</small></form></div>}
-function LeadModal({lead,users,products,productError,retryProducts,onClose,onSave,busy,currentUser,leads}){
- const [data,setData]=useState({fullName:'',company:'',industry:'',region:'Toshkent shahri',city:'',customerType:'legal',products:[],paymentType:'undecided',offerSent:'no',rejectionReason:'',rejectionOther:'',phone:'+998',source:'phone',sourceOther:'',operatorId:currentUser.id,status:'new',notes:'',followUpAt:null,amount:0,...payload(lead)}),[error,setError]=useState(''),[events,setEvents]=useState([]),[productQuery,setProductQuery]=useState('');
- useEffect(()=>{if(lead.id)request('/leads/'+lead.id+'/events').then(setEvents).catch(e=>setError(e.message));const close=e=>{if(e.key==='Escape'&&!busy)onClose()};document.addEventListener('keydown',close);const old=document.body.style.overflow;document.body.style.overflow='hidden';return()=>{document.removeEventListener('keydown',close);document.body.style.overflow=old}},[lead.id,busy]);
- const set=(k,v)=>setData(d=>({...d,[k]:v}));
- const input=(k,title,props={})=><label>{title}<input value={data[k]} onChange={e=>set(k,props.type==='number'?Number(e.target.value):e.target.value)} {...props}/></label>;
- const select=(k,title,opts=choices[k])=><label>{title}<select value={data[k]} onChange={e=>set(k,k==='operatorId'?+e.target.value:e.target.value)}>{opts.map(([v,t])=><option key={v} value={v}>{t}</option>)}</select></label>;
- const duplicate=leads.find(l=>l.id!==lead.id&&l.phone===data.phone.replace(/[\s()-]/g,''));
- const dt=data.followUpAt?new Date(new Date(data.followUpAt).getTime()-new Date(data.followUpAt).getTimezoneOffset()*60000).toISOString().slice(0,16):'';
- return <div className="overlay" onClick={e=>{if(e.target===e.currentTarget)onClose()}}><section className="modal" role="dialog" aria-modal="true" aria-label="Lead ma’lumotlari"><div className="modal-head"><div><p className="eyebrow">{lead.id?'MIJOZ KARTASI':'YANGI MUROJAAT'}</p><h2>{lead.id?lead.fullName:'Yangi lead qo‘shish'}</h2></div><button aria-label="Yopish" onClick={onClose}><X/></button></div><form onSubmit={async e=>{e.preventDefault();setError('');try{await onSave(data)}catch(e){setError(e.message)}}}><div className="modal-body"><div className="section-label">01 <span>Mijoz haqida</span></div><div className="form-grid">{input('fullName','Ism va familiya *',{required:true,minLength:2,maxLength:120,autoFocus:true})}{input('phone','Telefon raqami *',{required:true,type:'tel',placeholder:'+998901234567'})}{select('customerType','Mijoz turi *')}{input('company','Korxona nomi / MChJ',{maxLength:160,placeholder:'Masalan: Grand Logistics MChJ'})}{input('industry','Faoliyat tarmog‘i / soha *',{required:true,maxLength:120,placeholder:'Logistika, qurilish, savdo...'})}{select('region','Hudud *',regions.map(r=>[r,r]))}{input('city','Shahar / tuman *',{required:true,maxLength:100})}{select('operatorId','Mas’ul operator *',users.map(u=>[u.id,u.name]))}</div>{duplicate&&<p className="warning">Bu raqam bazada mavjud: {duplicate.fullName}. Bir mijozning yangi murojaati bo‘lsa, saqlashingiz mumkin.</p>}<div className="section-label">02 <span>Qiziqish va tijoriy taklif</span></div><label>Qiziqtirgan mahsulotlar * <span className="muted">Bir nechta tanlash mumkin</span><input placeholder="Mahsulot qidirish..." value={productQuery} onChange={e=>setProductQuery(e.target.value)}/></label>{productError&&<div className="warning">{productError}<button type="button" onClick={retryProducts}>Qayta yuklash</button></div>}<div className="product-picker">{[...products,...data.products.filter(p=>!products.some(x=>x.id===p.id))].filter(p=>p.name.toLowerCase().includes(productQuery.toLowerCase())).map(p=><label key={p.id}><input type="checkbox" checked={data.products.some(x=>x.id===p.id)} onChange={e=>set('products',e.target.checked?[...data.products,p]:data.products.filter(x=>x.id!==p.id))}/>{p.name}</label>)}{!products.length&&!productError&&<p className="muted">Mahsulotlar yuklanmoqda...</p>}</div><div className="form-grid">{select('paymentType','To‘lov turi *')}{select('offerSent','Tijoriy taklif *')}{input('amount','Taxminiy / sotuv summasi (UZS)',{type:'number',min:0,max:1e15,step:'any'})}{select('status','Lead bosqichi',stages)}</div><div className="section-label">03 <span>Murojaat va keyingi qadam</span></div><div className="form-grid">{select('source','Murojaat manbasi *')}{data.source==='other'&&input('sourceOther','Boshqa manba *',{required:true,maxLength:200})}<label>Qayta bog‘lanish sanasi<input type="datetime-local" value={dt} onChange={e=>set('followUpAt',e.target.value?new Date(e.target.value).toISOString():null)}/></label>{select('rejectionReason','Rad etish sababi'+(data.status==='lost'?' *':''))}{data.rejectionReason==='other'&&input('rejectionOther','Boshqa sabab *',{required:true,maxLength:1000})}</div><label>Operator izohi<textarea rows={3} maxLength={5000} value={data.notes} onChange={e=>set('notes',e.target.value)} placeholder="Mijoz ehtiyoji, kelishuvlar va keyingi harakat..."/></label>{lead.id&&<div className="history"><div className="section-label">04 <span>O‘zgarishlar tarixi</span></div>{events.map(ev=><div key={ev.id}><i/><p><b>{ev.actor}</b> · {ev.description.replace(/\b(new|contacted|offer|negotiation|won|lost)\b/g,s=>stages.find(x=>x[0]===s)?.[1]||s)}<small>{date(ev.createdAt)}</small></p></div>)}</div>}{error&&<div role="alert" className="error">{error}</div>}</div><div className="modal-footer"><span>* Majburiy maydonlar</span><button type="button" className="secondary" onClick={onClose} disabled={busy}>Bekor qilish</button><button className="primary" disabled={busy||!data.products.length}>{busy?'Saqlanmoqda...':'Saqlash'}<Check size={17}/></button></div></form></section></div>
+
+function App() {
+  const [user, setUser] = useState(() => {
+    try {
+      return JSON.parse(sessionStorage.getItem('uat_user'));
+    } catch {
+      return null;
+    }
+  });
+  const [page, setPage] = useState('board');
+  const [viewMode, setViewMode] = useState('kanban'); // 'kanban' | 'list'
+  const [leads, setLeads] = useState([]);
+  const [users, setUsers] = useState([]);
+  const [products, setProducts] = useState([]);
+  const [productError, setProductError] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [modal, setModal] = useState(null);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [notifOpen, setNotifOpen] = useState(false);
+  const [query, setQuery] = useState('');
+  const [customerTypeFilter, setCustomerTypeFilter] = useState('');
+  const [source, setSource] = useState('');
+  const [from, setFrom] = useState('');
+  const [to, setTo] = useState('');
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    const fn = () => setUser(null);
+    window.addEventListener('uat-logout', fn);
+    return () => window.removeEventListener('uat-logout', fn);
+  }, []);
+
+  async function load() {
+    setLoading(true);
+    try {
+      const [l, u] = await Promise.all([request('/leads'), request('/users')]);
+      setLeads(Array.isArray(l) ? l : []);
+      setUsers(Array.isArray(u) ? u : []);
+      setError('');
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function loadProducts() {
+    setProductError('');
+    try {
+      const p = await request('/products');
+      setProducts(Array.isArray(p) ? p : []);
+    } catch (e) {
+      setProductError(e.message);
+    }
+  }
+
+  useEffect(() => {
+    if (user) {
+      load();
+      loadProducts();
+      const t = setInterval(load, 60000);
+      return () => clearInterval(t);
+    }
+  }, [user]);
+
+  const leadList = Array.isArray(leads) ? leads : [];
+  const userList = Array.isArray(users) ? users : [];
+
+  const filtered = leadList.filter(
+    (l) =>
+      (!customerTypeFilter || l.customerType === customerTypeFilter) &&
+      (!source || l.source === source) &&
+      (!from || (l.createdAt && l.createdAt.slice(0, 10) >= from)) &&
+      (!to || (l.createdAt && l.createdAt.slice(0, 10) <= to)) &&
+      [l.fullName, l.phone, l.company, ...(Array.isArray(l.products) ? l.products.map((p) => p.name) : [])]
+        .join(' ')
+        .toLowerCase()
+        .includes(query.toLowerCase())
+  );
+
+  async function save(data) {
+    if (busy) return;
+    setBusy(true);
+    try {
+      await request(modal.id ? '/leads/' + modal.id : '/leads', modal.id ? 'PUT' : 'POST', modal.id ? { ...data, version: modal.version } : data);
+      setModal(null);
+      await load();
+    } catch (e) {
+      throw e;
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function move(id, status) {
+    const lead = leadList.find((l) => l.id === id);
+    if (!lead || lead.status === status || busy) return;
+    if (status === 'lost') {
+      setModal({ ...lead, status });
+      return;
+    }
+    setBusy(true);
+    try {
+      await request('/leads/' + id, 'PUT', { ...payload(lead), status, version: lead.version });
+      await load();
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  if (!user) return <Login onLogin={setUser} />;
+
+  const won = filtered.filter((l) => l.status === 'won');
+  const active = filtered.filter((l) => !['won', 'lost'].includes(l.status));
+  const totalAmountWon = won.reduce((n, l) => n + (Number(l.amount) || 0), 0);
+
+  return (
+    <div className="page-container">
+      {/* 1. TOP CORPORATE BANNER */}
+      <header className="corp-header">
+        <div className="corp-brand-lockup">
+          <div className="corp-logo-mark">
+            <span className="logo-u">
+              U<span>↗</span>
+            </span>
+          </div>
+          <div className="corp-brand-text">
+            <h1>UzAutoTrailer</h1>
+            <span>C R M</span>
+          </div>
+          <div className="corp-divider" />
+          <div className="corp-tagline">
+            Sotuvlarni boshqarish.
+            <small>Katta imkoniyatlarga yo‘l.</small>
+          </div>
+        </div>
+        <div className="corp-trust-banner">
+          Samarali savdo. Shaffof jarayon.
+          <span>Yuqori natija.</span>
+        </div>
+      </header>
+
+      {/* 2. MAIN APPLICATION WINDOW */}
+      <div className="window-frame">
+        {/* SIDEBAR */}
+        <aside className="sidebar">
+          {/* macOS window control dots */}
+          <div className="window-dots">
+            <span className="dot dot-red" />
+            <span className="dot dot-yellow" />
+            <span className="dot dot-green" />
+          </div>
+
+          {/* Sidebar Brand Lockup */}
+          <div className="sidebar-brand">
+            <span className="sidebar-logo">
+              U<span>↗</span>
+            </span>
+            <div className="sidebar-brand-name">
+              UzAutoTrailer
+              <small>CRM</small>
+            </div>
+          </div>
+
+          {/* Department badge */}
+          <div className="dept-pill">
+            <span className="online-dot" />
+            Sotuv bo‘limi
+            <span className="tag">CRM</span>
+          </div>
+
+          <p className="nav-label">ISH MAYDONI</p>
+          <nav className="sidebar-nav">
+            <button className={page === 'board' ? 'active' : ''} onClick={() => setPage('board')}>
+              <Columns3 size={18} />
+              Leadlar
+              <b className="count">{leadList.length}</b>
+            </button>
+            <button className={page === 'stats' ? 'active' : ''} onClick={() => setPage('stats')}>
+              <LayoutDashboard size={18} />
+              Statistika
+            </button>
+          </nav>
+
+          {/* Sidebar Bottom */}
+          <div className="sidebar-bottom">
+            <button className="sidebar-util-btn" onClick={() => setPage('board')}>
+              <ShieldCheck size={16} />
+              Yaqqol mijozlar bazasi
+            </button>
+            <button className="sidebar-util-btn" onClick={() => setSettingsOpen(true)}>
+              <Settings size={16} />
+              Sozlamalar
+            </button>
+
+            {/* User Profile Row */}
+            <div className="user-profile-bar">
+              <span className="user-avatar-circle">{user.name?.[0] || 'A'}</span>
+              <div className="user-info">
+                <strong>{user.name}</strong>
+                <small>{user.role === 'admin' ? 'Administrator' : 'Operator'}</small>
+              </div>
+              <button
+                className="logout-icon-btn"
+                title="Chiqish"
+                onClick={() => {
+                  sessionStorage.clear();
+                  setUser(null);
+                }}
+              >
+                <LogOut size={16} />
+              </button>
+            </div>
+          </div>
+        </aside>
+
+        {/* MAIN VIEWPORT */}
+        <main className="main-viewport">
+          {/* Top Window Navigation Header */}
+          <header className="window-header">
+            <div className="breadcrumb-trail">
+              Ish maydoni <ChevronRight size={14} /> <span>{page === 'board' ? 'Leadlar' : 'Statistika'}</span>
+            </div>
+            <div className="header-actions">
+              <button className="header-icon-btn" title="Qidiruv" onClick={() => document.getElementById('search-input')?.focus()}>
+                <Search size={16} />
+              </button>
+              <button className="header-icon-btn" title="Bildirishnomalar" onClick={() => setNotifOpen(!notifOpen)}>
+                <Bell size={16} />
+                <span className="badge-dot" />
+              </button>
+              <div className="system-status-indicator">
+                <span className="status-blue-dot" />
+                UzAutoTrailer CRM
+              </div>
+              <span className="header-avatar">{user.name?.[0] || 'A'}</span>
+            </div>
+          </header>
+
+          {/* Body Content */}
+          <section className="content-body">
+            {/* Page Title & Main Action Row */}
+            <div className="page-title-row">
+              <div>
+                <p className="page-eyebrow">MUHIM KO‘RSATKICHLAR</p>
+                <h1>{page === 'board' ? 'Har bir lead nazoratda.' : 'Raqamlar orqali natija.'}</h1>
+                <p className="desc">
+                  {page === 'board'
+                    ? 'Muvaffaqiyatli boshqaring, mijozlarni davom ettiring va sotuvga olib boring.'
+                    : 'Jamoa natijalarini va mijozlar oqimini bir joyda kuzating.'}
+                </p>
+              </div>
+
+              {page === 'board' ? (
+                <button className="btn-primary" onClick={() => setModal({})}>
+                  <Plus size={17} /> Yangi lead
+                </button>
+              ) : (
+                <div className="date-range-badge">
+                  <Calendar size={14} />
+                  <span>01/08/2024 - 10/09/2024</span>
+                </div>
+              )}
+            </div>
+
+            {error && (
+              <div style={{ background: '#fef2f2', border: '1px solid #fecaca', color: '#991b1b', padding: '10px 14px', borderRadius: 8, fontSize: 13, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span>{error}</span>
+                <button onClick={load} style={{ fontWeight: 700, textDecoration: 'underline' }}>Qayta urinish</button>
+              </div>
+            )}
+
+            {/* 4 Metrics Cards */}
+            <div className="metrics-row">
+              <div className="kpi-card">
+                <div className="kpi-top">
+                  <div className="kpi-icon-box blue">
+                    <Users size={18} />
+                  </div>
+                  <span className="kpi-label">Jami leadlar</span>
+                </div>
+                <div className="kpi-value">{filtered.length}</div>
+                <div className="kpi-footer">Tanlangan davr bo‘yicha</div>
+              </div>
+
+              <div className="kpi-card">
+                <div className="kpi-top">
+                  <div className="kpi-icon-box sky">
+                    <TrendingUp size={18} />
+                  </div>
+                  <span className="kpi-label">Faol manfaatdorlar</span>
+                </div>
+                <div className="kpi-value">{active.length}</div>
+                <div className="kpi-footer">
+                  Javob qaytdi mijozlar <span className="kpi-growth">+ +4%</span>
+                </div>
+              </div>
+
+              <div className="kpi-card">
+                <div className="kpi-top">
+                  <div className="kpi-icon-box cyan">
+                    <CheckCircle2 size={18} />
+                  </div>
+                  <span className="kpi-label">Muvaffaqiyatli sotuv</span>
+                </div>
+                <div className="kpi-value">{won.length}</div>
+                <div className="kpi-footer">
+                  {filtered.length ? Math.round((won.length / filtered.length) * 100) : 0}% umumiy konversiya{' '}
+                  <span className="kpi-growth">+ +0%</span>
+                </div>
+              </div>
+
+              <div className="kpi-card">
+                <div className="kpi-top">
+                  <div className="kpi-icon-box amber">
+                    <Coins size={18} />
+                  </div>
+                  <span className="kpi-label">Sotuv samarasi</span>
+                </div>
+                <div className="kpi-value">{totalAmountWon ? money(totalAmountWon) : '0'} UZS</div>
+                <div className="kpi-footer">
+                  UZS - umumiy kutilgan kasr <span className="kpi-growth">+ +0%</span>
+                </div>
+              </div>
+            </div>
+
+            {page === 'board' ? (
+              <>
+                {/* Filter Toolbar */}
+                <div className="filter-toolbar">
+                  <div className="search-box">
+                    <Search size={16} />
+                    <input
+                      id="search-input"
+                      placeholder="Ism, telefon yoki mahsulot bo‘yicha qidirish..."
+                      value={query}
+                      onChange={(e) => setQuery(e.target.value)}
+                    />
+                  </div>
+
+                  <select
+                    className="filter-select"
+                    value={customerTypeFilter}
+                    onChange={(e) => setCustomerTypeFilter(e.target.value)}
+                  >
+                    <option value="">Barcha segmentlar</option>
+                    {choices.customerType.map(([v, t]) => (
+                      <option key={v} value={v}>
+                        {t}
+                      </option>
+                    ))}
+                  </select>
+
+                  <select
+                    className="filter-select"
+                    value={source}
+                    onChange={(e) => setSource(e.target.value)}
+                  >
+                    <option value="">Barcha manbalar</option>
+                    {choices.source.map(([v, t]) => (
+                      <option key={v} value={v}>
+                        {t}
+                      </option>
+                    ))}
+                  </select>
+
+                  <input
+                    type="date"
+                    className="date-input-field"
+                    value={from}
+                    onChange={(e) => setFrom(e.target.value)}
+                    title="Davr boshlanishi"
+                  />
+                  <span style={{ color: '#94a3b8' }}>—</span>
+                  <input
+                    type="date"
+                    className="date-input-field"
+                    value={to}
+                    onChange={(e) => setTo(e.target.value)}
+                    min={from}
+                    title="Davr oxiri"
+                  />
+
+                  <button className="btn-icon-square" title="Yangilash" onClick={load}>
+                    <RefreshCw size={15} className={loading ? 'spin' : ''} />
+                  </button>
+                </div>
+
+                {/* Board Section Header */}
+                <div className="board-header-row">
+                  <div className="board-title-group">
+                    <h2>
+                      <Columns3 size={18} color="#0969da" />
+                      Sotuv voronkasi
+                    </h2>
+                    <span className="lead-count">{filtered.length} ta lead</span>
+                  </div>
+
+                  <div className="view-mode-toggle">
+                    <button
+                      className={`view-btn ${viewMode === 'kanban' ? 'active' : ''}`}
+                      onClick={() => setViewMode('kanban')}
+                    >
+                      <Columns3 size={14} /> Kanban
+                    </button>
+                    <button
+                      className={`view-btn ${viewMode === 'list' ? 'active' : ''}`}
+                      onClick={() => setViewMode('list')}
+                    >
+                      <List size={14} /> Ro‘yxat
+                    </button>
+                    <button className="view-btn" title="Qo‘shimcha" onClick={() => setModal({})}>
+                      <MoreHorizontal size={14} />
+                    </button>
+                  </div>
+                </div>
+
+                {/* View Mode: Kanban or List */}
+                {viewMode === 'kanban' ? (
+                  <div className="kanban-board">
+                    {stages.map(([status, title, color, bgLight, borderLight]) => {
+                      const colLeads = filtered.filter((l) => l.status === status);
+                      return (
+                        <div
+                          className="kanban-column"
+                          key={status}
+                          onDragOver={(e) => e.preventDefault()}
+                          onDrop={(e) => {
+                            e.preventDefault();
+                            move(e.dataTransfer.getData('text/plain'), status);
+                          }}
+                        >
+                          <div className="column-header">
+                            <span className="column-dot" style={{ background: color }} />
+                            <span>{title}</span>
+                            <span className="column-count-badge">{colLeads.length}</span>
+                          </div>
+
+                          <div className="column-cards-container">
+                            {status === 'new' && (
+                              <button
+                                className="btn-col-add-quick"
+                                onClick={() => setModal({ status: 'new' })}
+                              >
+                                <span>Yangi lead qo‘shish</span>
+                                <Plus size={14} />
+                              </button>
+                            )}
+
+                            {colLeads.map((l) => (
+                              <article
+                                key={l.id}
+                                className="kanban-card"
+                                draggable={!busy}
+                                onDragStart={(e) => e.dataTransfer.setData('text/plain', l.id)}
+                                onClick={() => setModal(l)}
+                              >
+                                <div className="card-header-line">
+                                  <span className="card-title">{l.fullName}</span>
+                                  <MoreHorizontal size={14} color="#94a3b8" />
+                                </div>
+
+                                <div className="card-company">
+                                  {l.company || label('customerType', l.customerType)}
+                                </div>
+
+                                {Array.isArray(l.products) && l.products.length > 0 && (
+                                  <div className="card-product-tag">
+                                    {l.products[0].name}
+                                    {l.products.length > 1 && ` (+${l.products.length - 1})`}
+                                  </div>
+                                )}
+
+                                <div className="card-info-item">
+                                  <MapPin size={12} color="#94a3b8" />
+                                  <span>
+                                    {l.region || 'Toshkent'}
+                                    {l.city ? `, ${l.city}` : ''}
+                                  </span>
+                                </div>
+
+                                <div className="card-info-item">
+                                  <Phone size={12} color="#94a3b8" />
+                                  <span>{l.phone}</span>
+                                </div>
+
+                                <div className="card-footer">
+                                  <div className="card-operator">
+                                    <span className="avatar-tiny">
+                                      {userList.find((u) => u.id === l.operatorId)?.name?.[0] || 'A'}
+                                    </span>
+                                    <span>{userList.find((u) => u.id === l.operatorId)?.name || 'Admin'}</span>
+                                  </div>
+                                  <span className="card-amount">
+                                    {l.amount ? `${money(l.amount)} UZS` : '+ UZS'}
+                                  </span>
+                                </div>
+                              </article>
+                            ))}
+
+                            {colLeads.length === 0 && status !== 'new' && (
+                              <div className="empty-col-card">
+                                <div
+                                  className="empty-col-icon-circle"
+                                  style={{ background: bgLight, color: color }}
+                                >
+                                  {status === 'contacted' && <Clock size={20} />}
+                                  {status === 'offer' && <FileText size={20} />}
+                                  {status === 'negotiation' && <Users size={20} />}
+                                  {status === 'won' && <Trophy size={20} />}
+                                  {status === 'lost' && <XCircle size={20} />}
+                                </div>
+                                <h4>Bu bosqichda lead yo‘q</h4>
+                                <p>Yangi lead qo‘shish</p>
+                                <button
+                                  className="btn-add-in-empty"
+                                  onClick={() => setModal({ status })}
+                                >
+                                  + Lead qo‘shish
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  /* LIST / TABLE VIEW */
+                  <div className="table-container">
+                    <table className="data-table">
+                      <thead>
+                        <tr>
+                          <th>Mijoz</th>
+                          <th>Telefon</th>
+                          <th>Hudud</th>
+                          <th>Mahsulotlar</th>
+                          <th>Mas’ul operator</th>
+                          <th>Bosqich</th>
+                          <th>Summa</th>
+                          <th>Sana</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {filtered.length === 0 ? (
+                          <tr>
+                            <td colSpan={8} style={{ textAlign: 'center', padding: '36px', color: '#94a3b8' }}>
+                              Leadlar topilmadi.
+                            </td>
+                          </tr>
+                        ) : (
+                          filtered.map((l) => {
+                            const stageObj = stages.find((s) => s[0] === l.status) || stages[0];
+                            return (
+                              <tr
+                                key={l.id}
+                                style={{ cursor: 'pointer' }}
+                                onClick={() => setModal(l)}
+                              >
+                                <td>
+                                  <strong>{l.fullName}</strong>
+                                  <div style={{ fontSize: 11, color: '#64748b' }}>
+                                    {l.company || label('customerType', l.customerType)}
+                                  </div>
+                                </td>
+                                <td>{l.phone}</td>
+                                <td>
+                                  {l.region}
+                                  {l.city ? `, ${l.city}` : ''}
+                                </td>
+                                <td>
+                                  {Array.isArray(l.products) && l.products.length > 0
+                                    ? l.products.map((p) => p.name).join(', ')
+                                    : '—'}
+                                </td>
+                                <td>{userList.find((u) => u.id === l.operatorId)?.name || 'Admin'}</td>
+                                <td>
+                                  <span
+                                    className="status-badge"
+                                    style={{
+                                      background: stageObj[3],
+                                      color: stageObj[2],
+                                      border: `1px solid ${stageObj[4]}`,
+                                    }}
+                                  >
+                                    <span style={{ width: 6, height: 6, borderRadius: '50%', background: stageObj[2] }} />
+                                    {stageObj[1]}
+                                  </span>
+                                </td>
+                                <td>
+                                  <strong>{money(l.amount)} UZS</strong>
+                                </td>
+                                <td style={{ fontSize: 11, color: '#64748b' }}>{date(l.createdAt)}</td>
+                              </tr>
+                            );
+                          })
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </>
+            ) : (
+              /* STATISTIKA PAGE (2x2 Grid matching mockup) */
+              <Stats leads={filtered} users={userList} />
+            )}
+          </section>
+        </main>
+      </div>
+
+      {/* 3. BOTTOM CORPORATE FOOTER BANNER */}
+      <footer className="corp-footer-banner">
+        <div className="footer-brand-title">
+          <h4>UZAUTOTRAILER CRM</h4>
+          <p>YANGI IMKONIYATLAR SARI BIRGA</p>
+        </div>
+        <div className="footer-features-row">
+          <div className="footer-feature-item">
+            <i><BarChart3 size={18} /></i>
+            <span>Ma’lumotlar asosida qaror qabul qiling</span>
+          </div>
+          <div className="footer-feature-item">
+            <i><Users size={18} /></i>
+            <span>Sotuv jarayonini to‘liq nazorat qiling</span>
+          </div>
+          <div className="footer-feature-item">
+            <i><Zap size={18} /></i>
+            <span>Samaradorlikni yanada oshiring</span>
+          </div>
+        </div>
+      </footer>
+
+      {/* MODALS */}
+      {modal && (
+        <LeadModal
+          lead={modal}
+          users={userList}
+          products={products}
+          productError={productError}
+          retryProducts={loadProducts}
+          onClose={() => !busy && setModal(null)}
+          onSave={save}
+          busy={busy}
+          currentUser={user}
+          leads={leadList}
+        />
+      )}
+
+      {settingsOpen && (
+        <SettingsModal onClose={() => setSettingsOpen(false)} currentUser={user} />
+      )}
+
+      {notifOpen && (
+        <NotificationsModal onClose={() => setNotifOpen(false)} leads={leadList} />
+      )}
+    </div>
+  );
 }
-function Stats({leads,users}){
- const group=(get)=>{const o={};leads.forEach(l=>{const vals=get(l);(Array.isArray(vals)?vals:[vals]).forEach(k=>{o[k]=(o[k]||0)+1})});return Object.entries(o).sort((a,b)=>b[1]-a[1])};
- const total=leads.length;
- function csv(){const rows=[['Operator','Jami leadlar','Sotuv','Konversiya %','Sotuv UZS'],...users.map(u=>{const a=leads.filter(l=>l.operatorId===u.id),w=a.filter(l=>l.status==='won');return [u.name,a.length,w.length,a.length?(w.length/a.length*100).toFixed(1):0,w.reduce((s,l)=>s+l.amount,0)]})];const blob=new Blob(['\ufeff'+rows.map(row=>row.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(';')).join('\r\n')],{type:'text/csv;charset=utf-8'});const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='operator-statistika.csv';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)}
- return <><div className="stats-grid"><Chart title="Sotuv voronkasi" subtitle="Leadlarning joriy bosqichlari" rows={stages.map(([s,t])=>[t,leads.filter(l=>l.status===s).length])} total={total}/><Chart title="Murojaat manbalari" subtitle="Mijozlar qayerdan kelmoqda?" rows={group(l=>label('source',l.source))} total={total}/><Chart title="Mahsulotga qiziqish" subtitle="Bir leadda bir nechta mahsulot bo‘lishi mumkin" rows={group(l=>l.products.map(p=>p.name))} total={total}/><Chart title="Hududlar kesimida" subtitle="Murojaatlarning geografiyasi" rows={group(l=>l.region)} total={total}/><Chart title="To‘lov turlari" subtitle="Mijozlarning to‘lov afzalliklari" rows={group(l=>label('paymentType',l.paymentType))} total={total}/><Chart title="Rad etish sabablari" subtitle="Faqat rad etilgan leadlar" rows={Object.entries(leads.filter(l=>l.status==='lost').reduce((o,l)=>{const k=label('rejectionReason',l.rejectionReason)||'Ko‘rsatilmagan';o[k]=(o[k]||0)+1;return o},{}))} total={leads.filter(l=>l.status==='lost').length}/></div><section className="operator-stats"><div><h2>Operatorlar natijasi</h2><button className="secondary" onClick={csv}><Download size={16}/> CSV yuklash</button></div><div className="table-scroll"><table><thead><tr><th>Operator</th><th>Jami lead</th><th>Faol</th><th>Sotuv</th><th>Konversiya</th><th>Sotuv summasi</th></tr></thead><tbody>{users.map(u=>{const a=leads.filter(l=>l.operatorId===u.id),w=a.filter(l=>l.status==='won');return <tr key={u.id}><td><span className="avatar tiny">{u.name[0]}</span> {u.name}</td><td>{a.length}</td><td>{a.filter(l=>!['won','lost'].includes(l.status)).length}</td><td>{w.length}</td><td>{a.length?(w.length/a.length*100).toFixed(1):0}%</td><td>{money(w.reduce((s,l)=>s+l.amount,0))} UZS</td></tr>})}</tbody></table></div></section></>
+
+/* STATS COMPONENT (Matches the right-side dashboard in the mockup) */
+function Stats({ leads, users }) {
+  const safeLeads = Array.isArray(leads) ? leads : [];
+  const safeUsers = Array.isArray(users) ? users : [];
+  const total = safeLeads.length;
+
+  // Grouping helper
+  const countBy = (fn) => {
+    const o = {};
+    safeLeads.forEach((l) => {
+      const vals = fn(l);
+      (Array.isArray(vals) ? vals : [vals]).forEach((k) => {
+        if (k) o[k] = (o[k] || 0) + 1;
+      });
+    });
+    return o;
+  };
+
+  const sourcesCount = countBy((l) => label('source', l.source));
+  const productsCount = countBy((l) => (Array.isArray(l.products) ? l.products.map((p) => p.name) : []));
+  const regionsCount = countBy((l) => l.region);
+
+  const mainSources = [
+    ['Telefon qo‘ng‘irog‘i', '#0969da'],
+    ['Veb-sayt', '#06b6d4'],
+    ['Tavsiya', '#eab308'],
+    ['Boshqa', '#ef4444'],
+  ];
+
+  const mainRegions = [
+    ['Samarqand', '#0969da'],
+    ['Toshkent shahri', '#2563eb'],
+    ['Farg‘ona', '#06b6d4'],
+    ['Buxoro', '#38bdf8'],
+    ['Boshqa hududlar', '#94a3b8'],
+  ];
+
+  function downloadCsv() {
+    const rows = [
+      ['Operator', 'Jami leadlar', 'Sotuv', 'Konversiya %', 'Sotuv UZS'],
+      ...safeUsers.map((u) => {
+        const a = safeLeads.filter((l) => l.operatorId === u.id);
+        const w = a.filter((l) => l.status === 'won');
+        return [
+          u.name,
+          a.length,
+          w.length,
+          a.length ? (w.length / a.length * 100).toFixed(1) : 0,
+          w.reduce((s, l) => s + (l.amount || 0), 0),
+        ];
+      }),
+    ];
+    const blob = new Blob(
+      ['\ufeff' + rows.map((row) => row.map((v) => '"' + String(v).replace(/"/g, '""') + '"').join(';')).join('\r\n')],
+      { type: 'text/csv;charset=utf-8' }
+    );
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'operator-statistika.csv';
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+
+  return (
+    <>
+      <div className="stats-2x2-grid">
+        {/* 1. Sotuv voronkasi (Horizontal bar chart) */}
+        <div className="stat-box">
+          <div className="stat-box-head">
+            <h3>Sotuv voronkasi</h3>
+            <p>Leadlarning joriy bosqichlari</p>
+          </div>
+          {stages.map(([statusKey, stageTitle]) => {
+            const count = safeLeads.filter((l) => l.status === statusKey).length;
+            const pct = total ? Math.round((count / total) * 100) : 0;
+            return (
+              <div key={statusKey} className="funnel-bar-item">
+                <div className="funnel-bar-info">
+                  <span>{stageTitle}</span>
+                  <span className="pct">
+                    {count} - {pct}%
+                  </span>
+                </div>
+                <div className="bar-track-bg">
+                  <div className="bar-fill" style={{ width: `${Math.max(count > 0 ? 8 : 0, pct)}%` }} />
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* 2. Leadlar manbalari (Donut chart with center text and legend) */}
+        <div className="stat-box">
+          <div className="stat-box-head">
+            <h3>Leadlar manbalari</h3>
+            <p>Mijozlar qayerdan kelmoqda?</p>
+          </div>
+          <div className="donut-chart-container">
+            <div className="donut-svg-wrap">
+              <svg viewBox="0 0 100 100" width="140" height="140">
+                <circle cx="50" cy="50" r="38" fill="transparent" stroke="#f1f5f9" strokeWidth="14" />
+                <circle
+                  cx="50"
+                  cy="50"
+                  r="38"
+                  fill="transparent"
+                  stroke="#0969da"
+                  strokeWidth="14"
+                  strokeDasharray="238.76"
+                  strokeDashoffset={total > 0 ? '0' : '238.76'}
+                  strokeLinecap="round"
+                  transform="rotate(-90 50 50)"
+                />
+              </svg>
+              <div className="donut-center-label">
+                <strong>{total}</strong>
+                <small>Jami lead</small>
+              </div>
+            </div>
+
+            <div className="donut-legend">
+              {mainSources.map(([sourceName, bulletColor]) => {
+                const count = sourcesCount[sourceName] || 0;
+                const pct = total ? Math.round((count / total) * 100) : 0;
+                return (
+                  <div key={sourceName} className="legend-item">
+                    <div className="legend-left">
+                      <span className="legend-bullet" style={{ background: bulletColor }} />
+                      <span>{sourceName}</span>
+                    </div>
+                    <span>
+                      {count} <small style={{ color: '#94a3b8' }}>({pct}%)</small>
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+
+        {/* 3. Mahsulotga qiziqish */}
+        <div className="stat-box">
+          <div className="stat-box-head">
+            <h3>Mahsulotga qiziqish</h3>
+            <p>Qaysi mahsulotlarga qiziqish yuqori?</p>
+          </div>
+          {Object.entries(productsCount).length === 0 ? (
+            <p style={{ color: '#94a3b8', fontSize: 12 }}>Hali mahsulot tanlanmagan.</p>
+          ) : (
+            Object.entries(productsCount)
+              .slice(0, 4)
+              .map(([prodName, count]) => {
+                const pct = total ? Math.round((count / total) * 100) : 0;
+                return (
+                  <div key={prodName} className="funnel-bar-item">
+                    <div className="funnel-bar-info">
+                      <span style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', maxWidth: '75%' }}>
+                        {prodName}
+                      </span>
+                      <span className="pct">
+                        {count} - {pct}%
+                      </span>
+                    </div>
+                    <div className="bar-track-bg">
+                      <div className="bar-fill" style={{ width: `${Math.max(count > 0 ? 8 : 0, pct)}%` }} />
+                    </div>
+                  </div>
+                );
+              })
+          )}
+        </div>
+
+        {/* 4. Hududlar kesimida (Uzbekistan map vector + legend) */}
+        <div className="stat-box">
+          <div className="stat-box-head">
+            <h3>Hududlar kesimida</h3>
+            <p>Leadlar qayer hududlardan?</p>
+          </div>
+          <div className="map-region-box">
+            <div className="map-svg-wrap">
+              {/* Stylized vector map of Uzbekistan with highlighted center */}
+              <svg viewBox="0 0 200 120" width="160" height="100">
+                {/* Uzbekistan outline background */}
+                <path
+                  d="M15,40 Q40,15 90,20 Q130,22 170,35 Q185,55 160,85 Q135,100 110,85 Q80,105 45,75 Q20,80 15,40 Z"
+                  fill="#f1f5f9"
+                  stroke="#cbd5e1"
+                  strokeWidth="1.5"
+                />
+                {/* Highlighted Samarqand/Tashkent region in blue */}
+                <path
+                  d="M100,65 L115,55 L130,70 L115,82 Z"
+                  fill="#0969da"
+                  stroke="#ffffff"
+                  strokeWidth="1"
+                />
+                <circle cx="115" cy="68" r="3" fill="#ffffff" />
+              </svg>
+            </div>
+
+            <div className="donut-legend">
+              {mainRegions.map(([regName, bulletColor]) => {
+                const count = regName === 'Boshqa hududlar' ? 0 : regionsCount[regName] || 0;
+                const pct = total ? Math.round((count / total) * 100) : 0;
+                return (
+                  <div key={regName} className="legend-item">
+                    <div className="legend-left">
+                      <span className="legend-bullet" style={{ background: bulletColor }} />
+                      <span>{regName}</span>
+                    </div>
+                    <span>
+                      {count} <small style={{ color: '#94a3b8' }}>({pct}%)</small>
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Operator stats table with download button */}
+      <div className="table-container" style={{ marginTop: 16 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', borderBottom: '1px solid #e2e8f0' }}>
+          <div>
+            <h3 style={{ fontSize: 15, fontWeight: 700, margin: 0 }}>Operatorlar natijasi</h3>
+            <p style={{ fontSize: 11, color: '#64748b', margin: '2px 0 0' }}>Jamoa a’zolarining ko‘rsatkichlari</p>
+          </div>
+          <button className="btn-secondary" onClick={downloadCsv}>
+            <Download size={14} /> CSV yuklash
+          </button>
+        </div>
+        <table className="data-table">
+          <thead>
+            <tr>
+              <th>Operator</th>
+              <th>Jami lead</th>
+              <th>Faol</th>
+              <th>Sotuv</th>
+              <th>Konversiya</th>
+              <th>Sotuv summasi</th>
+            </tr>
+          </thead>
+          <tbody>
+            {safeUsers.map((u) => {
+              const a = safeLeads.filter((l) => l.operatorId === u.id);
+              const w = a.filter((l) => l.status === 'won');
+              const conv = a.length ? (w.length / a.length * 100).toFixed(1) : 0;
+              const sum = w.reduce((s, l) => s + (l.amount || 0), 0);
+              return (
+                <tr key={u.id}>
+                  <td>
+                    <strong>{u.name}</strong>
+                  </td>
+                  <td>{a.length}</td>
+                  <td>{a.filter((l) => !['won', 'lost'].includes(l.status)).length}</td>
+                  <td>{w.length}</td>
+                  <td>{conv}%</td>
+                  <td>
+                    <strong>{money(sum)} UZS</strong>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </>
+  );
 }
-function Chart({title,subtitle,rows,total}){const max=Math.max(1,...rows.map(r=>r[1]));return <section className="chart"><h2>{title}</h2><p className="muted">{subtitle}</p>{!rows.length?<div className="empty-chart">Bu davrda ma’lumot yo‘q</div>:rows.map(([name,n])=><div className="bar-row" key={name}><div><span>{name}</span><b>{n} <small>· {total?Math.round(n/total*100):0}%</small></b></div><div className="bar-track"><i style={{width:`${n/max*100}%`}}/></div></div>)}</section>}
-createRoot(document.getElementById('root')).render(<App/>);
+
+/* LEAD MODAL */
+function LeadModal({ lead, users, products, productError, retryProducts, onClose, onSave, busy, currentUser, leads }) {
+  const [data, setData] = useState({
+    fullName: '',
+    company: '',
+    industry: '',
+    region: 'Toshkent shahri',
+    city: '',
+    customerType: 'legal',
+    products: [],
+    paymentType: 'undecided',
+    offerSent: 'no',
+    rejectionReason: '',
+    rejectionOther: '',
+    phone: '+998',
+    source: 'phone',
+    sourceOther: '',
+    operatorId: currentUser.id,
+    status: 'new',
+    notes: '',
+    followUpAt: null,
+    amount: 0,
+    ...payload(lead),
+  });
+  const [error, setError] = useState('');
+  const [events, setEvents] = useState([]);
+  const [productQuery, setProductQuery] = useState('');
+
+  useEffect(() => {
+    if (lead.id) {
+      request('/leads/' + lead.id + '/events')
+        .then((evs) => setEvents(Array.isArray(evs) ? evs : []))
+        .catch((e) => setError(e.message));
+    }
+    const close = (e) => {
+      if (e.key === 'Escape' && !busy) onClose();
+    };
+    document.addEventListener('keydown', close);
+    return () => document.removeEventListener('keydown', close);
+  }, [lead.id, busy]);
+
+  const set = (k, v) => setData((d) => ({ ...d, [k]: v }));
+  const input = (k, title, props = {}) => (
+    <label className="field-label">
+      {title}
+      <input
+        value={data[k] ?? ''}
+        onChange={(e) => set(k, props.type === 'number' ? Number(e.target.value) : e.target.value)}
+        {...props}
+      />
+    </label>
+  );
+  const select = (k, title, opts = choices[k]) => (
+    <label className="field-label">
+      {title}
+      <select value={data[k]} onChange={(e) => set(k, k === 'operatorId' ? +e.target.value : e.target.value)}>
+        {opts.map(([v, t]) => (
+          <option key={v} value={v}>
+            {t}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+
+  const safeLeads = Array.isArray(leads) ? leads : [];
+  const duplicate = safeLeads.find((l) => l.id !== lead.id && l.phone === data.phone.replace(/[\s()-]/g, ''));
+  const dt = data.followUpAt
+    ? new Date(new Date(data.followUpAt).getTime() - new Date(data.followUpAt).getTimezoneOffset() * 60000)
+        .toISOString()
+        .slice(0, 16)
+    : '';
+
+  return (
+    <div className="modal-backdrop" onClick={(e) => e.target === e.currentTarget && onClose()}>
+      <section className="modal-content" role="dialog" aria-modal="true">
+        <div className="modal-header">
+          <div>
+            <p style={{ fontSize: 10, fontWeight: 800, color: '#0969da', letterSpacing: 1.5, margin: 0 }}>
+              {lead.id ? 'MIJOZ KARTASI' : 'YANGI MUROJAAT'}
+            </p>
+            <h2 style={{ margin: '3px 0 0' }}>{lead.id ? lead.fullName : 'Yangi lead qo‘shish'}</h2>
+          </div>
+          <button onClick={onClose} style={{ color: '#94a3b8' }}>
+            <X size={20} />
+          </button>
+        </div>
+
+        <form
+          onSubmit={async (e) => {
+            e.preventDefault();
+            setError('');
+            try {
+              await onSave(data);
+            } catch (e) {
+              setError(e.message);
+            }
+          }}
+        >
+          <div className="modal-body">
+            <div style={{ fontSize: 12, fontWeight: 700, color: '#0969da', display: 'flex', alignItems: 'center', gap: 6 }}>
+              <span>01</span> Mijoz haqida ma’lumot
+            </div>
+            <div className="form-grid-2">
+              {input('fullName', 'Ism va familiya *', { required: true, minLength: 2, maxLength: 120, autoFocus: true })}
+              {input('phone', 'Telefon raqami *', { required: true, type: 'tel', placeholder: '+998901234567' })}
+              {select('customerType', 'Mijoz turi *')}
+              {input('company', 'Korxona nomi / MChJ', { maxLength: 160, placeholder: 'Masalan: Grand Logistics MChJ' })}
+              {input('industry', 'Faoliyat tarmog‘i / soha *', { required: true, maxLength: 120, placeholder: 'Logistika, qurilish...' })}
+              {select('region', 'Hudud *', regions.map((r) => [r, r]))}
+              {input('city', 'Shahar / tuman *', { required: true, maxLength: 100 })}
+              {select('operatorId', 'Mas’ul operator *', (Array.isArray(users) ? users : []).map((u) => [u.id, u.name]))}
+            </div>
+
+            {duplicate && (
+              <p style={{ background: '#fef3c7', color: '#b45309', padding: '8px 12px', borderRadius: 6, fontSize: 11 }}>
+                Bu raqam bazada mavjud: <strong>{duplicate.fullName}</strong>.
+              </p>
+            )}
+
+            <div style={{ fontSize: 12, fontWeight: 700, color: '#0969da', display: 'flex', alignItems: 'center', gap: 6, marginTop: 10 }}>
+              <span>02</span> Mahsulotlar va taklif
+            </div>
+            <label className="field-label">
+              Qiziqtirgan mahsulotlar *
+              <input
+                placeholder="Mahsulot qidirish..."
+                value={productQuery}
+                onChange={(e) => setProductQuery(e.target.value)}
+              />
+            </label>
+
+            {productError && (
+              <div style={{ color: '#b45309', fontSize: 11 }}>
+                {productError} <button type="button" onClick={retryProducts} style={{ textDecoration: 'underline' }}>Qayta yuklash</button>
+              </div>
+            )}
+
+            <div className="product-selector-grid">
+              {[...(Array.isArray(products) ? products : []), ...(Array.isArray(data.products) ? data.products : []).filter((p) => !(Array.isArray(products) ? products : []).some((x) => x.id === p.id))]
+                .filter((p) => p.name.toLowerCase().includes(productQuery.toLowerCase()))
+                .map((p) => (
+                  <label key={p.id}>
+                    <input
+                      type="checkbox"
+                      checked={(Array.isArray(data.products) ? data.products : []).some((x) => x.id === p.id)}
+                      onChange={(e) =>
+                        set(
+                          'products',
+                          e.target.checked
+                            ? [...data.products, p]
+                            : data.products.filter((x) => x.id !== p.id)
+                        )
+                      }
+                    />
+                    <span>{p.name}</span>
+                  </label>
+                ))}
+            </div>
+
+            <div className="form-grid-2">
+              {select('paymentType', 'To‘lov turi *')}
+              {select('offerSent', 'Tijoriy taklif *')}
+              {input('amount', 'Taxminiy / sotuv summasi (UZS)', { type: 'number', min: 0, step: 'any' })}
+              {select('status', 'Lead bosqichi', stages.map(([k, t]) => [k, t]))}
+            </div>
+
+            <div style={{ fontSize: 12, fontWeight: 700, color: '#0969da', display: 'flex', alignItems: 'center', gap: 6, marginTop: 10 }}>
+              <span>03</span> Murojaat va keyingi qadam
+            </div>
+            <div className="form-grid-2">
+              {select('source', 'Murojaat manbasi *')}
+              <label className="field-label">
+                Qayta bog‘lanish sanasi
+                <input
+                  type="datetime-local"
+                  value={dt}
+                  onChange={(e) => set('followUpAt', e.target.value ? new Date(e.target.value).toISOString() : null)}
+                />
+              </label>
+            </div>
+
+            <label className="field-label">
+              Operator izohi
+              <textarea
+                rows={2}
+                value={data.notes}
+                onChange={(e) => set('notes', e.target.value)}
+                placeholder="Mijoz ehtiyoji va kelishuvlar..."
+              />
+            </label>
+
+            {lead.id && events.length > 0 && (
+              <div style={{ marginTop: 12 }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: '#64748b', marginBottom: 8 }}>O‘zgarishlar tarixi</div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  {events.map((ev) => (
+                    <div key={ev.id} style={{ fontSize: 11, color: '#475569', display: 'flex', justifyContent: 'space-between' }}>
+                      <span>
+                        <strong>{ev.actor}</strong>: {ev.description}
+                      </span>
+                      <span style={{ color: '#94a3b8' }}>{date(ev.createdAt)}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {error && <p style={{ color: '#ef4444', fontSize: 12 }}>{error}</p>}
+          </div>
+
+          <div className="modal-footer">
+            <button type="button" className="btn-secondary" onClick={onClose} disabled={busy}>
+              Bekor qilish
+            </button>
+            <button className="btn-primary" disabled={busy || !(Array.isArray(data.products) ? data.products : []).length}>
+              {busy ? 'Saqlanmoqda...' : 'Saqlash'}
+            </button>
+          </div>
+        </form>
+      </section>
+    </div>
+  );
+}
+
+/* SETTINGS MODAL */
+function SettingsModal({ onClose, currentUser }) {
+  return (
+    <div className="modal-backdrop" onClick={(e) => e.target === e.currentTarget && onClose()}>
+      <div className="modal-content" style={{ maxWidth: 520 }}>
+        <div className="modal-header">
+          <h2>Tizim sozlamalari</h2>
+          <button onClick={onClose} style={{ color: '#94a3b8' }}>
+            <X size={20} />
+          </button>
+        </div>
+        <div className="modal-body">
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', background: '#f8fafc', borderRadius: 8, border: '1px solid #e2e8f0' }}>
+            <ShieldCheck size={28} color="#0969da" />
+            <div>
+              <strong style={{ fontSize: 13, color: '#0f172a' }}>UzAutoTrailer CRM v2.0</strong>
+              <div style={{ fontSize: 11, color: '#64748b' }}>PostgreSQL Baza & NestJS API integratsiyasi</div>
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <div style={{ fontSize: 12, fontWeight: 700, color: '#334155' }}>Foydalanuvchi ma’lumotlari:</div>
+            <div style={{ fontSize: 12, color: '#475569' }}>
+              Ism: <strong>{currentUser?.name}</strong>
+            </div>
+            <div style={{ fontSize: 12, color: '#475569' }}>
+              Lavozim: <strong>{currentUser?.role === 'admin' ? 'Administrator' : 'Operator'}</strong>
+            </div>
+            <div style={{ fontSize: 12, color: '#475569' }}>
+              Backend statusi: <span style={{ color: '#16a34a', fontWeight: 700 }}>Faol (Uланган)</span>
+            </div>
+          </div>
+        </div>
+        <div className="modal-footer">
+          <button className="btn-primary" onClick={onClose}>
+            Yopish
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* NOTIFICATIONS MODAL */
+function NotificationsModal({ onClose, leads }) {
+  const safeLeads = Array.isArray(leads) ? leads : [];
+  return (
+    <div className="modal-backdrop" onClick={(e) => e.target === e.currentTarget && onClose()}>
+      <div className="modal-content" style={{ maxWidth: 440 }}>
+        <div className="modal-header">
+          <h2>Bildirishnomalar</h2>
+          <button onClick={onClose} style={{ color: '#94a3b8' }}>
+            <X size={20} />
+          </button>
+        </div>
+        <div className="modal-body" style={{ maxHeight: 360 }}>
+          {safeLeads.length === 0 ? (
+            <p style={{ color: '#94a3b8', fontSize: 12, textAlign: 'center' }}>Hozircha bildirishnomalar yo‘q.</p>
+          ) : (
+            safeLeads.slice(0, 5).map((l) => (
+              <div
+                key={l.id}
+                style={{
+                  padding: '10px 12px',
+                  background: '#f8fafc',
+                  border: '1px solid #e2e8f0',
+                  borderRadius: 8,
+                  fontSize: 12,
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 600, color: '#0f172a' }}>
+                  <span>{l.fullName}</span>
+                  <span style={{ fontSize: 10, color: '#0969da' }}>{label('source', l.source)}</span>
+                </div>
+                <div style={{ color: '#64748b', fontSize: 11, marginTop: 2 }}>{l.company || 'Yakka tartibdagi mijoz'}</div>
+              </div>
+            ))
+          )}
+        </div>
+        <div className="modal-footer">
+          <button className="btn-primary" onClick={onClose}>
+            Tushunarli
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* LOGIN SCREEN */
+function Login({ onLogin }) {
+  const [error, setError] = useState('');
+  const [busy, setBusy] = useState(false);
+
+  return (
+    <div className="login-wrap">
+      <div className="login-card">
+        <div className="login-left-banner">
+          <div className="corp-brand-lockup" style={{ color: '#ffffff' }}>
+            <div className="corp-logo-mark" style={{ background: 'rgba(255,255,255,0.1)', borderColor: 'rgba(255,255,255,0.2)' }}>
+              <span className="logo-u" style={{ color: '#38bdf8' }}>
+                U<span>↗</span>
+              </span>
+            </div>
+            <div className="corp-brand-text">
+              <h1 style={{ color: '#ffffff' }}>UzAutoTrailer</h1>
+              <span style={{ color: '#38bdf8' }}>C R M</span>
+            </div>
+          </div>
+
+          <div style={{ margin: '48px 0' }}>
+            <p style={{ fontSize: 10, fontWeight: 800, letterSpacing: 2, color: '#38bdf8', marginBottom: 8 }}>
+              SOTUV JAMOASI UCHUN
+            </p>
+            <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 32, fontWeight: 800, lineHeight: 1.2 }}>
+              Muloqotdan <br /> natijagacha.
+            </h2>
+            <p style={{ fontSize: 13, color: '#94a3b8', lineHeight: 1.6, marginTop: 14 }}>
+              Leadlar, mijozlar va jamoa natijalari.
+              <br />
+              Hammasi bitta qulay ish maydonida.
+            </p>
+          </div>
+
+          <div style={{ fontSize: 11, color: '#64748b' }}>UzAutoTrailer · Sales Management System</div>
+        </div>
+
+        <form
+          className="login-right-form"
+          onSubmit={async (e) => {
+            e.preventDefault();
+            setBusy(true);
+            setError('');
+            const data = new FormData(e.target);
+            try {
+              const r = await request('/auth/login', 'POST', Object.fromEntries(data));
+              sessionStorage.setItem('uat_token', r.token);
+              sessionStorage.setItem('uat_user', JSON.stringify(r.user));
+              onLogin(r.user);
+            } catch (e) {
+              setError(e.message);
+            } finally {
+              setBusy(false);
+            }
+          }}
+        >
+          <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: 1.5, color: '#0969da', background: '#eff6ff', padding: '3px 8px', borderRadius: 4, width: 'fit-content', marginBottom: 12 }}>
+            XUSH KELIBSIZ
+          </span>
+          <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 24, fontWeight: 800, color: '#0f172a', margin: '0 0 6px' }}>
+            Ish maydoniga kirish
+          </h2>
+          <p style={{ fontSize: 13, color: '#64748b', margin: '0 0 24px' }}>
+            Operator hisobingiz orqali davom eting.
+          </p>
+
+          <label className="field-label" style={{ marginBottom: 16 }}>
+            Login
+            <input name="username" autoComplete="username" required placeholder="admin yoki rahima" defaultValue="admin" />
+          </label>
+
+          <label className="field-label" style={{ marginBottom: 20 }}>
+            Parol
+            <input
+              name="password"
+              type="password"
+              autoComplete="current-password"
+              required
+              placeholder="Parolingizni kiriting"
+              defaultValue="12345678910"
+            />
+          </label>
+
+          {error && (
+            <p style={{ background: '#fef2f2', color: '#b91c1c', border: '1px solid #fecaca', padding: '8px 12px', borderRadius: 6, fontSize: 12, marginBottom: 16 }}>
+              {error}
+            </p>
+          )}
+
+          <button className="btn-primary" style={{ width: '100%', justifyContent: 'center', padding: '12px' }} disabled={busy}>
+            {busy ? 'Kirilmoqda...' : 'Kirish'}
+            <ArrowUpRight size={17} />
+          </button>
+
+          <small style={{ display: 'block', color: '#94a3b8', fontSize: 11, marginTop: 20, textAlign: 'center' }}>
+            Hisoblar: Admin, Rahima, Amirshoh.
+          </small>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+createRoot(document.getElementById('root')).render(<App />);
